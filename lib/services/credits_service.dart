@@ -40,7 +40,7 @@ class CreditsService {
     await prefs.setInt(_keyBalance, balance);
   }
 
-  static Future<int> deductCredits(int amount, {String description = '消费'}) async {
+  static Future<int> deductCredits({required int amount, String description = '消费'}) async {
     final balance = await fetchBalance();
     if (balance < amount) return balance;
     final newBalance = balance - amount;
@@ -59,7 +59,7 @@ class CreditsService {
     return balance;
   }
 
-  static Future<List<Map<String, dynamic>>> getServerTransactions({int page = 1, int size = 20}) async {
+  static Future<List<CreditsRecord>> getServerTransactions({int page = 1, int size = 20}) async {
     // Placeholder - in real app, call server API
     return [];
   }
