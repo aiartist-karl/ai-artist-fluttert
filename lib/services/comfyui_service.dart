@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:typed_data';
 import 'package:dio/dio.dart';
+import 'package:http_parser/http_parser.dart';
 
 /// ComfyUI 连接服务
 /// 连接本地 ComfyUI (默认 http://127.0.0.1:8188)
@@ -184,7 +185,7 @@ class ComfyUiService {
       'image': MultipartFile.fromBytes(
         imageBytes,
         filename: filename,
-        contentType: 'image/png',
+        contentType: MediaType('image', 'png'),
       ),
       'subfolder': '',
       'type': 'input',
