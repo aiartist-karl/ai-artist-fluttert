@@ -1,0 +1,58 @@
+name: ai_artist
+description: AI Artist - Cross-platform AI assistant
+publish_to: 'none'
+version: 5.10.0+51000
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.6
+  provider: ^6.1.1
+  http: ^1.1.0
+  shared_preferences: ^2.2.2
+  json_annotation: ^4.8.1
+  intl: ^0.19.0
+  cached_network_image: ^3.3.1
+  image_picker: ^1.0.7
+  file_picker: ^6.1.1
+  url_launcher: ^6.2.4
+  path_provider: ^2.1.2
+  sqflite: ^2.3.2
+  uuid: ^4.3.3
+  crypto: ^3.0.3
+  jwt_decoder: ^2.0.1
+  permission_handler: ^11.3.0
+  device_info_plus: ^10.1.0
+  package_info_plus: ^7.0.0
+  flutter_markdown: ^0.6.22
+  webview_flutter: ^4.7.0
+  record: ^5.1.0
+  just_audio: ^0.9.37
+  flutter_tts: ^3.8.5
+  speech_to_text: ^6.6.0
+  camera: ^0.11.0+2
+  image: ^4.1.7
+  archive: ^3.6.1
+  share_plus: ^7.2.2
+  receive_sharing_intent: ^1.4.5
+  local_auth: ^2.2.0
+  flutter_secure_storage: ^9.0.0
+  connectivity_plus: ^6.0.3
+  dio: ^5.4.1
+  retry: ^3.1.2
+  logger: ^2.0.2+1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^7.0.0
+  build_runner: ^2.4.8
+  json_serializable: ^6.7.1
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/
