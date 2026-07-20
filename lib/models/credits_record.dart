@@ -1,6 +1,7 @@
 /// 积分消费记录
 /// 对应 Android CreditsHistoryManager.kt - CreditsRecord
 class CreditsRecord {
+  final int id;
   final String type; // chat, image, card_redeem, register_bonus, recharge
   final String description;
   final int amount;
@@ -8,6 +9,7 @@ class CreditsRecord {
   final int timestamp;
 
   CreditsRecord({
+    required this.id,
     required this.type,
     required this.description,
     required this.amount,
@@ -16,6 +18,7 @@ class CreditsRecord {
   });
 
   factory CreditsRecord.fromJson(Map<String, dynamic> json) => CreditsRecord(
+    id: json['id'] as int? ?? 0,
     type: json['type'] as String? ?? '',
     description: json['description'] as String? ?? '',
     amount: json['amount'] as int? ?? 0,
@@ -24,6 +27,7 @@ class CreditsRecord {
   );
 
   Map<String, dynamic> toJson() => {
+    'id': id,
     'type': type,
     'description': description,
     'amount': amount,
