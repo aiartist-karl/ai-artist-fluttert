@@ -2,17 +2,18 @@ import 'package:flutter/foundation.dart';
 import '../services/auth_service.dart';
 
 /// 认证状态管理
-/// 参考 Android UserManager.kt 的逻辑
 class AuthProvider extends ChangeNotifier {
-  // ==================== 状态变量 ====================
   String? _token;
   String? _username;
   String _userId = '';
   int _creditsBalance = 0;
   bool _isLoading = false;
   String? _errorMessage;
+  
+  final AuthService _authService = AuthService();
+  bool _initialized = false;
 
-  // ==================== Getters ====================
+  // Getters
   String? get token => _token;
   String? get username => _username;
   String get userId => _userId;
@@ -21,26 +22,34 @@ class AuthProvider extends ChangeNotifier {
   String? get errorMessage => _errorMessage;
   bool get isLoggedIn => _token != null && _token!.isNotEmpty;
 
-  // ==================== 操作方法 ====================
+  Future<void> _ensureInit() async {
+    if (!_initialized) {
+      await _authService.init();
+      _initialized = true;
+    }
+  }
+
+  void _syncFromService() {
+    _token = _authService.token;
+    _username = _authService.username;
+    _userId = _authService.userId;
+    _creditsBalance = _authService.creditsBalance;
+  }
 
   /// 登录
   Future<bool> login(String username, String password) async {
     _setLoading(true);
     _clearError();
-
     try {
-      final result = await AuthService.login(username, password);
-
-      if (result['success'] == true) {
-        _token = result['token'] as String?;
-        _username = result['username'] as String? ?? username;
-        _userId = result['userId'] as String? ?? '';
-        _creditsBalance = result['credits'] as int? ?? 0;
+      await _ensureInit();
+      final result = await _authService.login(username, password);
+      if (result.isSuccess) {
+        _syncFromService();
         _setLoading(false);
         notifyListeners();
         return true;
       } else {
-        _errorMessage = result['message'] as String? ?? '登录失败';
+        _errorMessage = result.errorMessage ?? '登录失败';
         _setLoading(false);
         notifyListeners();
         return false;
@@ -57,20 +66,16 @@ class AuthProvider extends ChangeNotifier {
   Future<bool> register(String username, String password) async {
     _setLoading(true);
     _clearError();
-
     try {
-      final result = await AuthService.register(username, password);
-
-      if (result['success'] == true) {
-        _token = result['token'] as String?;
-        _username = result['username'] as String? ?? username;
-        _userId = result['userId'] as String? ?? '';
-        _creditsBalance = result['credits'] as int? ?? 0;
+      await _ensureInit();
+      final result = await _authService.register(username, password);
+      if (result.isSuccess) {
+        _syncFromService();
         _setLoading(false);
         notifyListeners();
         return true;
       } else {
-        _errorMessage = result['message'] as String? ?? '注册失败';
+        _errorMessage = result.errorMessage ?? '注册失败';
         _setLoading(false);
         notifyListeners();
         return false;
@@ -85,6 +90,7 @@ class AuthProvider extends ChangeNotifier {
 
   /// 登出
   void logout() {
+    _authService.logout();
     _token = null;
     _username = null;
     _userId = '';
@@ -96,14 +102,14 @@ class AuthProvider extends ChangeNotifier {
   /// 查询积分余额
   Future<void> fetchCredits() async {
     if (!isLoggedIn) return;
-
     try {
-      final result = await AuthService.getCredits(_token!);
-      if (result['success'] == true) {
-        _creditsBalance = result['balance'] as int? ?? 0;
+      await _ensureInit();
+      final result = await _authService.getCredits();
+      if (result.isSuccess && result.data != null) {
+        _creditsBalance = result.data!.balance;
         notifyListeners();
       } else {
-        _errorMessage = result['message'] as String? ?? '查询积分失败';
+        _errorMessage = result.errorMessage ?? '查询积分失败';
         notifyListeners();
       }
     } catch (e) {
@@ -119,13 +125,13 @@ class AuthProvider extends ChangeNotifier {
       notifyListeners();
       return null;
     }
-
     try {
-      final result = await AuthService.createRechargeOrder(_token!, productId);
-      if (result['success'] == true) {
-        return result['orderId'] as String?;
+      await _ensureInit();
+      final result = await _authService.createRechargeOrder(productId);
+      if (result.isSuccess && result.data != null) {
+        return result.data;
       } else {
-        _errorMessage = result['message'] as String? ?? '创建订单失败';
+        _errorMessage = result.errorMessage ?? '创建订单失败';
         notifyListeners();
         return null;
       }
@@ -139,19 +145,15 @@ class AuthProvider extends ChangeNotifier {
   /// 扣除积分
   Future<bool> deductCredits(int amount, {String description = '消费'}) async {
     if (!isLoggedIn) return false;
-
     try {
-      final result = await AuthService.deductCredits(
-        _token!,
-        amount,
-        description,
-      );
-      if (result['success'] == true) {
-        _creditsBalance = result['balance'] as int? ?? _creditsBalance;
+      await _ensureInit();
+      final result = await _authService.deductCredits(amount, description: description);
+      if (result.isSuccess) {
+        _syncFromService();
         notifyListeners();
         return true;
       } else {
-        _errorMessage = result['message'] as String? ?? '扣费失败';
+        _errorMessage = result.errorMessage ?? '扣费失败';
         notifyListeners();
         return false;
       }
@@ -169,21 +171,20 @@ class AuthProvider extends ChangeNotifier {
       notifyListeners();
       return false;
     }
-
     if (cardCode.trim().isEmpty) {
       _errorMessage = '卡密不能为空';
       notifyListeners();
       return false;
     }
-
     try {
-      final result = await AuthService.redeemCardCode(_token!, cardCode.trim());
-      if (result['success'] == true) {
-        _creditsBalance = result['balance'] as int? ?? _creditsBalance;
+      await _ensureInit();
+      final result = await _authService.redeemCardCode(cardCode.trim());
+      if (result.isSuccess) {
+        _syncFromService();
         notifyListeners();
         return true;
       } else {
-        _errorMessage = result['message'] as String? ?? '兑换失败';
+        _errorMessage = result.errorMessage ?? '兑换失败';
         notifyListeners();
         return false;
       }
@@ -200,36 +201,33 @@ class AuthProvider extends ChangeNotifier {
     int size = 20,
   }) async {
     if (!isLoggedIn) return [];
-
     try {
-      final result = await AuthService.getTransactions(_token!, page, size);
-      if (result['success'] == true) {
-        return (result['items'] as List?)?.cast<Map<String, dynamic>>() ?? [];
+      await _ensureInit();
+      final result = await _authService.getTransactions(page: page, size: size);
+      if (result.isSuccess && result.data != null) {
+        return result.data!;
       } else {
-        _errorMessage = result['message'] as String? ?? '查询记录失败';
+        _errorMessage = result.errorMessage ?? '查询记录失败';
         notifyListeners();
         return [];
       }
     } catch (e) {
       _errorMessage = '查询记录失败: ${e.toString()}';
-      notifyListeners();
       return [];
     }
   }
 
-  /// 更新本地积分余额
   void setCreditsLocal(int balance) {
+    _authService.setCreditsLocal(balance);
     _creditsBalance = balance;
     notifyListeners();
   }
 
-  /// 清除错误信息
   void clearError() {
     _clearError();
     notifyListeners();
   }
 
-  // ==================== 私有方法 ====================
   void _setLoading(bool value) {
     _isLoading = value;
     notifyListeners();
