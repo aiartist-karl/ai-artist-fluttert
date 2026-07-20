@@ -38,6 +38,15 @@ class ToolDefinition {
         },
       };
 
+  Map<String, dynamic> toOpenAITool() => {
+        'type': 'function',
+        'function': {
+          'name': name,
+          'description': description,
+          'parameters': jsonDecode(parameters),
+        },
+      };
+
   factory ToolDefinition.fromJson(Map<String, dynamic> json) => ToolDefinition(
         name: json['name'] as String? ?? '',
         description: json['description'] as String? ?? '',
@@ -69,13 +78,32 @@ class ToolCallResult {
 /// 管理30+工具的定义、分发和执行
 class FunctionCallingService {
   final Dio _dio;
-  final Dio _searchDio;
+  late final Dio _searchDio;
   final AuthService _authService;
   final ComfyUiService? _comfyUiService;
 
   /// 连续失败计数器
   int _consecutiveFailures = 0;
   static const int _maxConsecutiveFailures = 3;
+
+  // ─── 静态单例 ───
+  static FunctionCallingService? _instance;
+
+  /// 初始化静态单例，在应用启动时调用
+  static void init({
+    required AuthService authService,
+    ComfyUiService? comfyUiService,
+    Dio? dio,
+  }) {
+    _instance = FunctionCallingService(
+      authService: authService,
+      comfyUiService: comfyUiService,
+      dio: dio,
+    );
+  }
+
+  /// 获取静态单例
+  static FunctionCallingService get instance => _instance!;
 
   FunctionCallingService({
     required AuthService authService,
@@ -104,7 +132,7 @@ class FunctionCallingService {
 
   // ─── 工具定义列表 ───
 
-  List<ToolDefinition> getAvailableTools() => _builtInTools();
+  static List<ToolDefinition> getAvailableTools() => _builtInTools();
 
   static List<ToolDefinition> _builtInTools() => [
         ToolDefinition(
@@ -546,15 +574,32 @@ class FunctionCallingService {
     }
   }
 
-  /// 并行执行多个工具
-  Future<List<ToolCallResult>> executeToolsParallel(
-    List<({String callId, String name, Map<String, dynamic> args})> toolCalls,
+  /// 并行执行多个工具（静态方法，通过单例委托）
+  /// 接收 List<Map<String, dynamic>>，每项包含 'id', 'name', 'arguments'
+  /// 返回 List<Map<String, dynamic>>，每项包含 'success', 'result', 'error'
+  static Future<List<Map<String, dynamic>>> executeToolsParallel(
+    List<Map<String, dynamic>> toolCalls,
   ) async {
+    final service = _instance!;
     final futures = toolCalls.map((tc) async {
       try {
-        return await executeTool(tc.name, tc.args);
+        final result = await service.executeTool(
+          tc['name'] as String,
+          (tc['arguments'] as Map<String, dynamic>?) ?? {},
+        );
+        return {
+          'success': result.success,
+          'result': result.result,
+          'error': result.error,
+          'callId': tc['id'] ?? '',
+        };
       } catch (e) {
-        return ToolCallResult(tc.name, false, '', e.toString());
+        return {
+          'success': false,
+          'result': '',
+          'error': e.toString(),
+          'callId': tc['id'] ?? '',
+        };
       }
     });
     return Future.wait(futures);

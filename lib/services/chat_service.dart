@@ -61,27 +61,61 @@ class ChatService {
   }
 
   // ==================== Ollama streaming ====================
-  static Stream<String> streamOllamaChat({
+  static Stream<Map<String, dynamic>> streamOllamaChat({
     required String host,
     required String model,
-    required List<Map<String, String>> messages,
+    required List<Map<String, dynamic>> messages,
     String? systemPrompt,
     String? imageBase64,
   }) async* {
     // Placeholder - in real app, make HTTP request to Ollama API
-    yield 'Ollama 流式响应占位';
+    yield {
+      'done': false,
+      'message': {
+        'role': 'assistant',
+        'content': 'Ollama 流式响应占位',
+      },
+    };
+    yield {
+      'done': true,
+      'message': {
+        'role': 'assistant',
+        'content': 'Ollama 流式响应占位',
+      },
+    };
   }
 
   // ==================== OpenAI streaming ====================
-  static Stream<String> streamOpenAIChat({
-    required String host,
+  static Stream<Map<String, dynamic>> streamOpenAIChat({
+    required String url,
     required String apiKey,
     required String model,
-    required List<Map<String, String>> messages,
+    required List<Map<String, dynamic>> messages,
+    List<Map<String, dynamic>>? tools,
     String? systemPrompt,
     String? imageBase64,
   }) async* {
     // Placeholder - in real app, make HTTP request to OpenAI API
-    yield 'OpenAI 流式响应占位';
+    yield {
+      'choices': [
+        {
+          'delta': {
+            'role': 'assistant',
+            'content': 'OpenAI 流式响应占位',
+          },
+          'finish_reason': null,
+        },
+      ],
+    };
+    yield {
+      'choices': [
+        {
+          'delta': {
+            'content': '',
+          },
+          'finish_reason': 'stop',
+        },
+      ],
+    };
   }
 }

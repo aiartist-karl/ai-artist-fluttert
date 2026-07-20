@@ -51,4 +51,31 @@ class HistoryItem {
     'negativePrompt': negativePrompt,
     'favorite': favorite,
   };
+
+  /// 创建副本，可选覆盖字段
+  HistoryItem copyWith({
+    int? id,
+    String? modelId,
+    int? timestamp,
+    String? imagePath,
+    int? width,
+    int? height,
+    String? mode,
+    String? prompt,
+    String? negativePrompt,
+    bool? favorite,
+    Map<String, dynamic>? params,
+  }) => HistoryItem(
+    id: id ?? this.id,
+    modelId: modelId ?? this.modelId,
+    timestamp: timestamp ?? this.timestamp,
+    imagePath: imagePath ?? this.imagePath,
+    width: width ?? this.width,
+    height: height ?? this.height,
+    mode: mode ?? this.mode,
+    prompt: prompt ?? this.prompt,
+    negativePrompt: negativePrompt ?? this.negativePrompt,
+    favorite: favorite ?? this.favorite,
+    params: params ?? this.params,
+  );
 }
