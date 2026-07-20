@@ -44,11 +44,10 @@ class AuthService {
   }
 
   void logout() {
-    _prefs?
-      ..remove(_keyToken)
-      ..remove(_keyUsername)
-      ..remove(_keyUserId)
-      ..remove(_keyCredits);
+    _prefs?.remove(_keyToken);
+    _prefs?.remove(_keyUsername);
+    _prefs?.remove(_keyUserId);
+    _prefs?.remove(_keyCredits);
   }
 
   // ─── 请求头 ───
@@ -110,11 +109,14 @@ class AuthService {
         return AuthResult.error('未获取到 token');
       }
 
-      await _prefs
-        ?..setString(_keyToken, tok)
-        ..setString(_keyUsername, returnedUsername)
-        ..setString(_keyUserId, userId)
-        ..setInt(_keyCredits, credits);
+      final p = _prefs;
+      if (p != null) {
+        await p
+          ..setString(_keyToken, tok)
+          ..setString(_keyUsername, returnedUsername)
+          ..setString(_keyUserId, userId)
+          ..setInt(_keyCredits, credits);
+      }
 
       return AuthResult.success(
         userId: userId,
